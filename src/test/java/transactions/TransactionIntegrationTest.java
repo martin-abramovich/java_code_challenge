@@ -8,8 +8,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.hamcrest.Matchers.hasSize;
+import org.junit.jupiter.api.BeforeEach;
+import transactions.repository.TransactionRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -17,6 +22,13 @@ class TransactionIntegrationTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired
+    TransactionRepository transactionRepository;
+
+    @BeforeEach
+    void cleanRepository() {
+        transactionRepository.clear();
+    }
 
     @Test
     void shouldCreateTransactionAndReturn200() throws Exception {
@@ -119,5 +131,104 @@ class TransactionIntegrationTest {
                             """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
+    }
+
+    @Test
+    void shouldReturnEmptyListForUnknownType() throws Exception {
+        mockMvc.perform(get("/transactions/types/unknown"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void shouldReturnTransactionIdsByType() throws Exception {
+        mockMvc.perform(put("/transactions/100")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/101")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 2000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/102")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 3000.0, "type": "food"}
+                            """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", containsInAnyOrder(100, 101)));
+    }
+
+    @Test
+    void shouldNotMixTransactionsFromDifferentTypes() throws Exception {
+        mockMvc.perform(put("/transactions/200")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/201")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 2000.0, "type": "food"}
+                            """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(200));
+
+        mockMvc.perform(get("/transactions/types/food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(201));
+    }
+
+    @Test
+    void shouldUpdateTypeWhenTransactionIsReplaced() throws Exception {
+        mockMvc.perform(put("/transactions/300")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """));
+
+        // Reemplazar con tipo diferente
+        mockMvc.perform(put("/transactions/300")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "food"}
+                            """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/transactions/types/food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", containsInAnyOrder(300)));
+    }
+
+    @Test
+    void shouldNotDuplicateIdsWhenSameTransactionIsUpdatedMultipleTimes() throws Exception {
+        mockMvc.perform(put("/transactions/400")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"amount": 1000.0, "type": "cars"}
+                        """));
+
+        mockMvc.perform(put("/transactions/400")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"amount": 2000.0, "type": "cars"}
+                        """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(400));
     }
 }
