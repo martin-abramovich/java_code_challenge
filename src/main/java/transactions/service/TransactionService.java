@@ -5,6 +5,7 @@ import transactions.dto.TransactionRequest;
 import transactions.exception.ParentTransactionNotFoundException;
 import transactions.model.Transaction;
 import transactions.repository.TransactionRepository;
+import java.util.List;
 
 
 @Service
@@ -29,5 +30,8 @@ public class TransactionService {
                 request.getParentId()
         );
         repository.save(transaction);
+    }
+    public List<Long> findIdsByType(String type) {
+        return repository.findIdsByType(type);
     }
 }

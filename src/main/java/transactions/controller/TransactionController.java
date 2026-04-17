@@ -6,6 +6,7 @@ import transactions.dto.TransactionRequest;
 import transactions.service.TransactionService;
 import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,5 +26,10 @@ public class TransactionController {
 
         service.save(id, request);
         return ResponseEntity.ok(Map.of("status", "ok"));
+    }
+
+    @GetMapping("/types/{type}")
+    public ResponseEntity<List<Long>> getTransactionsByType(@PathVariable String type) {
+        return ResponseEntity.ok(service.findIdsByType(type));
     }
 }
