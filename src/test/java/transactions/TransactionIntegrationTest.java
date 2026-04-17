@@ -266,4 +266,31 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sum").value(8000.0));
     }
+
+    @Test
+    void shouldReturnTransitiveSumMatchingSpec() throws Exception {
+        mockMvc.perform(put("/transactions/10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/11")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 10000.0, "type": "shopping", "parent_id": 10}
+                            """));
+        mockMvc.perform(put("/transactions/12")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "shopping", "parent_id": 11}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(20000.0));
+
+        mockMvc.perform(get("/transactions/sum/11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(15000.0));
+    }
 }
