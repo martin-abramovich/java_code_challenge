@@ -82,4 +82,24 @@ class TransactionIntegrationTest {
                             """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void shouldReturn400WhenAmountIsNegative() throws Exception {
+        mockMvc.perform(put("/transactions/40")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {"amount": -100.0, "type": "cars"}
+                        """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenAmountIsZero() throws Exception {
+        mockMvc.perform(put("/transactions/41")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {"amount": 0.0, "type": "cars"}
+                        """))
+                .andExpect(status().isBadRequest());
+    }
 }

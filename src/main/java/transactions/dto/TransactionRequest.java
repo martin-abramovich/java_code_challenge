@@ -3,10 +3,12 @@ package transactions.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public class TransactionRequest {
 
     @NotNull(message = "amount is required")
+    @Positive(message = "amount must be greater than 0")
     private Double amount;
 
     @NotBlank(message = "type is required")
