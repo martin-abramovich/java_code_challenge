@@ -163,4 +163,28 @@ class TransactionIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$", containsInAnyOrder(100, 101)));
     }
+
+    @Test
+    void shouldNotMixTransactionsFromDifferentTypes() throws Exception {
+        mockMvc.perform(put("/transactions/200")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/201")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 2000.0, "type": "food"}
+                            """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(200));
+
+        mockMvc.perform(get("/transactions/types/food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(201));
+    }
 }
