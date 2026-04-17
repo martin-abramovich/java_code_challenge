@@ -7,6 +7,8 @@ import transactions.exception.TransactionNotFoundException;
 import transactions.model.Transaction;
 import transactions.repository.TransactionRepository;
 import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 
 @Service
@@ -40,6 +42,19 @@ public class TransactionService {
         repository.findById(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
-        return 0.0; // mínimo para que compile
+        double sum = 0.0;
+        Queue<Long> queue = new LinkedList<>();
+        queue.add(transactionId);
+
+        while (!queue.isEmpty()) {
+            Long currentId = queue.poll();
+            Transaction current = repository.findById(currentId).orElseThrow();
+            sum += current.getAmount();
+
+            repository.findChildrenOf(currentId)
+                    .forEach(child -> queue.add(child.getTransactionId()));
+        }
+
+        return sum;
     }
 }

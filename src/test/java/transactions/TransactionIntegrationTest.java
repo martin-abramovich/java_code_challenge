@@ -237,4 +237,17 @@ class TransactionIntegrationTest {
         mockMvc.perform(get("/transactions/sum/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldReturnAmountForTransactionWithNoChildren() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(5000.0));
+    }
 }
