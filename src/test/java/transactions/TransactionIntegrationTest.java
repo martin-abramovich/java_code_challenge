@@ -6,7 +6,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -21,7 +20,6 @@ import transactions.repository.TransactionRepository;
 class TransactionIntegrationTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
     @Autowired
     TransactionRepository transactionRepository;
 
@@ -249,5 +247,23 @@ class TransactionIntegrationTest {
         mockMvc.perform(get("/transactions/sum/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sum").value(5000.0));
+    }
+
+    @Test
+    void shouldReturnSumForParentWithOneChild() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 3000.0, "type": "shopping", "parent_id": 1}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(8000.0));
     }
 }
