@@ -3,6 +3,7 @@ package transactions.service;
 import org.springframework.stereotype.Service;
 import transactions.dto.TransactionRequest;
 import transactions.exception.ParentTransactionNotFoundException;
+import transactions.exception.TransactionNotFoundException;
 import transactions.model.Transaction;
 import transactions.repository.TransactionRepository;
 import java.util.List;
@@ -33,5 +34,12 @@ public class TransactionService {
     }
     public List<Long> findIdsByType(String type) {
         return repository.findIdsByType(type);
+    }
+
+    public double calculateSum(long transactionId) {
+        repository.findById(transactionId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        return 0.0; // mínimo para que compile
     }
 }

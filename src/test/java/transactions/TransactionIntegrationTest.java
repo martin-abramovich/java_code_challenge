@@ -231,4 +231,10 @@ class TransactionIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0]").value(400));
     }
+
+    @Test
+    void shouldReturn404WhenTransactionNotFoundForSum() throws Exception {
+        mockMvc.perform(get("/transactions/sum/999"))
+                .andExpect(status().isNotFound());
+    }
 }

@@ -2,6 +2,7 @@ package transactions.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import transactions.dto.SumResponse;
 import transactions.dto.TransactionRequest;
 import transactions.service.TransactionService;
 import jakarta.validation.Valid;
@@ -31,5 +32,10 @@ public class TransactionController {
     @GetMapping("/types/{type}")
     public ResponseEntity<List<Long>> getTransactionsByType(@PathVariable String type) {
         return ResponseEntity.ok(service.findIdsByType(type));
+    }
+
+    @GetMapping("/sum/{id}")
+    public ResponseEntity<SumResponse> getSum(@PathVariable long id) {
+        return ResponseEntity.ok(new SumResponse(service.calculateSum(id)));
     }
 }
