@@ -8,4 +8,5 @@ public interface TransactionRepository {
     void save(Transaction transaction);
     Optional<Transaction> findById(long id);
     List<Long> findIdsByType(String type);
+    void clear();
 }

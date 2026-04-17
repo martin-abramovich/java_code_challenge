@@ -30,4 +30,9 @@ public class InMemoryTransactionRepository implements TransactionRepository {
                 .map(Transaction::getTransactionId)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void clear() {
+        storage.clear();
+    }
 }
