@@ -42,4 +42,24 @@ class TransactionIntegrationTest {
                         .content(body))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void shouldCreateTransactionWithValidParentId() throws Exception {
+        // Primero crear el padre
+        mockMvc.perform(put("/transactions/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """))
+                .andExpect(status().isOk());
+
+        // Luego el hijo con parent_id=10
+        mockMvc.perform(put("/transactions/11")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 2000.0, "type": "shopping", "parent_id": 10}
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
 }
