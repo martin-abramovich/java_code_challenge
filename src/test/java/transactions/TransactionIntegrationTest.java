@@ -62,4 +62,24 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
     }
+
+    @Test
+    void shouldReturn400WhenAmountIsMissing() throws Exception {
+        mockMvc.perform(put("/transactions/30")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"type": "cars"}
+                            """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenTypeIsMissing() throws Exception {
+        mockMvc.perform(put("/transactions/31")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 1000.0}
+                            """))
+                .andExpect(status().isBadRequest());
+    }
 }

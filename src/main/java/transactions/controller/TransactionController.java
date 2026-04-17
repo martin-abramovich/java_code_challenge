@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import transactions.dto.TransactionRequest;
 import transactions.service.TransactionService;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class TransactionController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, String>> createTransaction(
             @PathVariable long id,
-            @RequestBody TransactionRequest request) {
+            @Valid @RequestBody TransactionRequest request) {
 
         service.save(id, request);
         return ResponseEntity.ok(Map.of("status", "ok"));
