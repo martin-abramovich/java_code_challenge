@@ -30,4 +30,16 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
     }
+
+    @Test
+    void shouldReturn400WhenParentIdDoesNotExist() throws Exception {
+        String body = """
+            {"amount": 1000.0, "type": "food", "parent_id": 999}
+            """;
+
+        mockMvc.perform(put("/transactions/20")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
 }
