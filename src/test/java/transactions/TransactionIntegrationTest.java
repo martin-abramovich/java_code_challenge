@@ -102,4 +102,22 @@ class TransactionIntegrationTest {
                         """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void shouldAllowSameIdToBeUsedMultipleTimes() throws Exception {
+        mockMvc.perform(put("/transactions/50")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/transactions/50")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 9999.0, "type": "food"}
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
 }
