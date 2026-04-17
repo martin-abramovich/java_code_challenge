@@ -211,4 +211,24 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", containsInAnyOrder(300)));
     }
+
+    @Test
+    void shouldNotDuplicateIdsWhenSameTransactionIsUpdatedMultipleTimes() throws Exception {
+        mockMvc.perform(put("/transactions/400")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"amount": 1000.0, "type": "cars"}
+                        """));
+
+        mockMvc.perform(put("/transactions/400")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"amount": 2000.0, "type": "cars"}
+                        """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(400));
+    }
 }
