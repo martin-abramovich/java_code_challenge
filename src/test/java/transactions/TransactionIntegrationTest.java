@@ -187,4 +187,28 @@ class TransactionIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0]").value(201));
     }
+
+    @Test
+    void shouldUpdateTypeWhenTransactionIsReplaced() throws Exception {
+        mockMvc.perform(put("/transactions/300")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "cars"}
+                            """));
+
+        // Reemplazar con tipo diferente
+        mockMvc.perform(put("/transactions/300")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 1000.0, "type": "food"}
+                            """));
+
+        mockMvc.perform(get("/transactions/types/cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/transactions/types/food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", containsInAnyOrder(300)));
+    }
 }
