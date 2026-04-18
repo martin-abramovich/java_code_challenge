@@ -35,12 +35,15 @@ de persistir. El sistema garantiza que la jerarquía siempre es un árbol válid
 `400` para errores de validación y ciclos, `404` para recursos inexistentes.
 
 ## Estructura del proyecto
-├── controller/ # Endpoints HTTP
-├── service/ # Lógica de negocio
-├── repository/ # Persistencia en memoria
-├── model/ # Entidades
-├── dto/ # Requests / Responses
-└── exception/ # Manejo de errores
+
+```
+├── controller/   # Endpoints HTTP
+├── service/      # Lógica de negocio
+├── repository/   # Persistencia en memoria
+├── model/        # Entidades
+├── dto/          # Requests / Responses
+└── exception/    # Manejo de errores
+```
 
 ## Correr con Docker
 
