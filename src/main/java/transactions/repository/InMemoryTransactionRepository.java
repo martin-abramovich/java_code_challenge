@@ -32,6 +32,13 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     }
 
     @Override
+    public List<Transaction> findChildrenOf(long parentId) {
+        return storage.values().stream()
+                .filter(t -> t.getParentId() != null && t.getParentId().equals(parentId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void clear() {
         storage.clear();
     }

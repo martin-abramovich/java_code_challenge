@@ -6,7 +6,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -21,7 +20,6 @@ import transactions.repository.TransactionRepository;
 class TransactionIntegrationTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
     @Autowired
     TransactionRepository transactionRepository;
 
@@ -230,5 +228,107 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0]").value(400));
+    }
+
+    @Test
+    void shouldReturn404WhenTransactionNotFoundForSum() throws Exception {
+        mockMvc.perform(get("/transactions/sum/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnAmountForTransactionWithNoChildren() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(5000.0));
+    }
+
+    @Test
+    void shouldReturnSumForParentWithOneChild() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 3000.0, "type": "shopping", "parent_id": 1}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(8000.0));
+    }
+
+    @Test
+    void shouldReturnTransitiveSumMatchingSpec() throws Exception {
+        mockMvc.perform(put("/transactions/10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "cars"}
+                            """));
+        mockMvc.perform(put("/transactions/11")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 10000.0, "type": "shopping", "parent_id": 10}
+                            """));
+        mockMvc.perform(put("/transactions/12")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 5000.0, "type": "shopping", "parent_id": 11}
+                            """));
+
+        mockMvc.perform(get("/transactions/sum/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(20000.0));
+
+        mockMvc.perform(get("/transactions/sum/11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sum").value(15000.0));
+    }
+
+    @Test
+    void shouldReturn400WhenPutWouldCreateCycle() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 100.0, "type": "x"}
+                            """));
+        mockMvc.perform(put("/transactions/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 200.0, "type": "x", "parent_id": 1}
+                            """));
+
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "x", "parent_id": 2}
+                            """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRejectSelfParenting() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "cars"}
+                            """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "cars", "parent_id": 1}
+                            """))
+                .andExpect(status().isBadRequest());
     }
 }
