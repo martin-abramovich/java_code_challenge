@@ -2,6 +2,7 @@ package transactions.service;
 
 import org.springframework.stereotype.Service;
 import transactions.dto.TransactionRequest;
+import transactions.exception.CyclicTransactionException;
 import transactions.exception.ParentTransactionNotFoundException;
 import transactions.exception.TransactionNotFoundException;
 import transactions.model.Transaction;
@@ -24,6 +25,10 @@ public class TransactionService {
         if (request.getParentId() != null) {
             repository.findById(request.getParentId())
                     .orElseThrow(() -> new ParentTransactionNotFoundException(request.getParentId()));
+
+            if (wouldCreateCycle(transactionId, request.getParentId())) {
+                throw new CyclicTransactionException(transactionId);
+            }
         }
 
         Transaction transaction = new Transaction(
@@ -56,5 +61,16 @@ public class TransactionService {
         }
 
         return sum;
+    }
+
+    private boolean wouldCreateCycle(long transactionId, long parentId) {
+        Long current = parentId;
+        while (current != null) {
+            if (current == transactionId) return true;
+            Transaction t = repository.findById(current).orElse(null);
+            if (t == null) break;
+            current = t.getParentId();
+        }
+        return false;
     }
 }

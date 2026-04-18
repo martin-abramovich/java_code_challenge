@@ -293,4 +293,25 @@ class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sum").value(15000.0));
     }
+
+    @Test
+    void shouldReturn400WhenPutWouldCreateCycle() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 100.0, "type": "x"}
+                            """));
+        mockMvc.perform(put("/transactions/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                            {"amount": 200.0, "type": "x", "parent_id": 1}
+                            """));
+
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "x", "parent_id": 2}
+                            """))
+                .andExpect(status().isBadRequest());
+    }
 }
