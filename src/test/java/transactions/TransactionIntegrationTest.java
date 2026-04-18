@@ -314,4 +314,21 @@ class TransactionIntegrationTest {
                             """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void shouldRejectSelfParenting() throws Exception {
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "cars"}
+                            """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"amount": 100.0, "type": "cars", "parent_id": 1}
+                            """))
+                .andExpect(status().isBadRequest());
+    }
 }
